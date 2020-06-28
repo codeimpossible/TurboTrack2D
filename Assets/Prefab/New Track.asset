@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: New Track
   m_EditorClassIdentifier: 
   sprites:
-  - {fileID: -7185895424969228801, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
-  - {fileID: 1821034816683627037, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
-  - {fileID: 281491231418348154, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
-  - {fileID: 1590509343616781973, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
-  - {fileID: -7185895424969228801, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
-  - {fileID: 1821034816683627037, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
-  - {fileID: 281491231418348154, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
+  - {fileID: 21300000, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
+  - {fileID: 21300000, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
+  - {fileID: 21300004, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
+  - {fileID: 21300006, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
+  - {fileID: 21300000, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
+  - {fileID: 21300002, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
+  - {fileID: 21300004, guid: 6cfc24268e569b84cb7c900478cc6ace, type: 3}
   Length: 1600
   roadWidth: 1500
   segmentLength: 200

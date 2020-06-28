@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class HqRenderer : MonoBehaviour
-{
+public partial class HqRenderer : MonoBehaviour {
     public RenderWindow Renderer;
 
     public Camera targetCamera;
@@ -32,6 +31,10 @@ public partial class HqRenderer : MonoBehaviour
     public bool drawSprites;
     public int rumbleWidth;
     public float SpriteScale;
+
+    public RenderTexture RoadRenderTexture;
+    public RenderTexture ObjectsRenderTexture;
+    public RenderTexture BackgroundRenderTexture;
 
     [NonSerialized]
     int screenWidth2;
@@ -63,22 +66,20 @@ public partial class HqRenderer : MonoBehaviour
     [NonSerialized]
     private int speed;
 
-    private void OnEnable()
-    {
-        Camera.onPostRender += PostRender;
-    }
-    private void OnDisable()
-    {
+    //private void OnEnable() {
+    //    Camera.onPostRender += PostRender;
+    //}
+    private void OnDestroy() {
         Camera.onPostRender -= PostRender;
     }
 
-    void Awake()
-    {
+    void Awake() {
+        Camera.onPostRender += PostRender;
         Renderer = new RenderWindow();
 
         Texture2D tex1 = new Texture2D(screenWidthRef, screenHeightRef, TextureFormat.RGBA32, false);
         tex1.filterMode = FilterMode.Point;
-        FG.sprite = Sprite.Create(tex1, new Rect(0, 0, screenWidthRef, screenHeightRef), new Vector2(0.5f,0.5f), PPU);
+        FG.sprite = Sprite.Create(tex1, new Rect(0, 0, screenWidthRef, screenHeightRef), new Vector2(0.5f, 0.5f), PPU);
         FG.sprite.name = "runtimeFG";
 
         Texture2D tex2 = new Texture2D(screenWidthRef, screenHeightRef, TextureFormat.RGBA32, false);
@@ -87,7 +88,7 @@ public partial class HqRenderer : MonoBehaviour
         Plane.sprite.name = "runtimePlane";
 
         quad = new Quad[] { new Quad(), new Quad(), new Quad(), new Quad(), new Quad(), new Quad(), new Quad() };
-        combined = new Mesh[] { new Mesh(), new Mesh(),new Mesh(),new Mesh(),new Mesh(),new Mesh(),new Mesh(),new Mesh(),new Mesh()};
+        combined = new Mesh[] { new Mesh(), new Mesh(), new Mesh(), new Mesh(), new Mesh(), new Mesh(), new Mesh(), new Mesh(), new Mesh() };
         dictionary = new Dictionary<Material, Quad>()
         {
             { grass1, quad[0]},
@@ -100,8 +101,7 @@ public partial class HqRenderer : MonoBehaviour
         };
         materials = new Material[] { grass1, grass2, rumble1, rumble2, road1, road2, dashline };
     }
-    public void drawSprite(ref Line line)
-    {
+    public void drawSprite(ref Line line) {
         if (line.Y < -screenHeight2) { return; }
         Sprite s = line.sprite;
         if (s == null) { return; }
@@ -125,25 +125,22 @@ public partial class HqRenderer : MonoBehaviour
         Rect source = new Rect(Vector2Int.zero, new Vector2(1, 1 - clipH / destH));
         Renderer.draw(source, s, target);
     }
-    private void addQuad(Material c, float x1, float y1, float w1, float x2, float y2, float w2)
-    {
+    private void addQuad(Material c, float x1, float y1, float w1, float x2, float y2, float w2) {
         dictionary[c].SetQuad(x1 / PPU, y1 / PPU, w1 / PPU, x2 / PPU, y2 / PPU, w2 / PPU);
     }
 
-    private void DrawObjects()
-    {
+    private void DrawObjects() {
         ////////draw objects////////
-        if (drawSprites)
-        {
+        if (drawSprites) {
             _renderTexture = RenderTexture.GetTemporary(screenWidthRef, screenHeightRef);
             RenderTexture currentActiveRT = RenderTexture.active;
             RenderTexture.active = _renderTexture;
+            Graphics.SetRenderTarget(_renderTexture);
             //Work in the pixel matrix of the texture resolution.
             GL.PushMatrix();
             GL.LoadPixelMatrix(0, screenWidthRef, screenHeightRef, 0);
             GL.Clear(false, true, new Color(0, 0, 0, 0));
-            for (int n = startPos + DravingDistance; n > startPos; n--)
-            {
+            for (int n = startPos + DravingDistance; n > startPos; n--) {
                 drawSprite(ref track.lines[n % track.Length]);
             }
             Graphics.CopyTexture(_renderTexture, FG.sprite.texture);
@@ -153,15 +150,14 @@ public partial class HqRenderer : MonoBehaviour
             RenderTexture.ReleaseTemporary(_renderTexture);
         }
     }
-    private void DrawRoad()
-    {
-        if (drawRoad)
-        {
+    private void DrawRoad() {
+        if (drawRoad) {
             _renderTexture = RenderTexture.GetTemporary(screenWidthRef, screenHeightRef);
             RenderTexture currentActiveRT = RenderTexture.active;
             Graphics.SetRenderTarget(_renderTexture);
-            GL.Clear(false, true, new Color(0.0f, 0.0f, 0, 0));
             GL.PushMatrix();
+            GL.Clear(false, true, new Color(0, 0, 0, 0));
+
             //GL.LoadOrtho();
             //var proj = Camera.main.projectionMatrix;
             ////// If Camera.current is set, multiply our matrix by the inverse of its view matrix
@@ -176,8 +172,7 @@ public partial class HqRenderer : MonoBehaviour
             var m = Matrix4x4.Scale(new Vector3(unscaledAspectRation * refHScale, refHScale, 1));
 
             int i = 0;
-            foreach (var material in materials)
-            {
+            foreach (var material in materials) {
                 Renderer.draw(dictionary[material].ToMesh(combined[i++]), material, m);
             }
             Graphics.CopyTexture(_renderTexture, Plane.sprite.texture);
@@ -187,52 +182,57 @@ public partial class HqRenderer : MonoBehaviour
         }
     }
 
-    private void DrawBackground()
-    {
-        if (speed != 0 && track.lines[playerPos].curve != 0)
-        {
+    private void DrawBackground() {
+        if (speed != 0 && track.lines[playerPos].curve != 0) {
             //doesnt work with sprite renderer, while still posted as sollution
             //BG.material.mainTextureOffset += new Vector2(Mathf.Sign(speed) * track.lines[startPos].curve * Time.deltaTime * paralaxSpeed, 0);
 
             //Not the best solution
-            //BG.transform.localPosition += new Vector3(Mathf.Sign(speed) * track.lines[startPos].curve / PPU, 0);
+            BG.transform.localPosition += new Vector3(Mathf.Sign(speed) * track.lines[startPos].curve / PPU, 0);
 
             //Good enough
-            _renderTexture = RenderTexture.GetTemporary(BG.sprite.texture.width, BG.sprite.texture.height);
-            RenderTexture currentActiveRT = RenderTexture.active;
-            RenderTexture.active = _renderTexture;
-            //Work in the pixel matrix of the texture resolution.
-            GL.PushMatrix();
-            GL.LoadPixelMatrix(0, screenWidthRef, screenHeightRef, 0);
+            //_renderTexture = RenderTexture.GetTemporary(BG.sprite.texture.width, BG.sprite.texture.height);
+            //RenderTexture currentActiveRT = RenderTexture.active;
+            //RenderTexture.active = _renderTexture;
 
-            Vector2 offset = new Vector2(0.1f * Time.deltaTime * Mathf.Sign(speed) * track.lines[playerPos].curve, 0);
-            Graphics.Blit(BG.sprite.texture, _renderTexture, Vector2.one, offset, 0, 0);
+            // Graphics.SetRenderTarget(currentActiveRT);
+            // RenderTexture.ReleaseTemporary(_renderTexture);
 
-            Graphics.CopyTexture(_renderTexture, BG.sprite.texture);
 
-            GL.PopMatrix();
-            Graphics.SetRenderTarget(currentActiveRT);
-            RenderTexture.ReleaseTemporary(_renderTexture);
+
+
+            //Graphics.SetRenderTarget(BackgroundRenderTexture);
+            ////Work in the pixel matrix of the texture resolution.
+            //GL.PushMatrix();
+            //GL.LoadPixelMatrix(0, screenWidthRef, screenHeightRef, 0);
+
+            //Vector2 offset = new Vector2(0.1f * Time.deltaTime * Mathf.Sign(speed) * track.lines[playerPos].curve, 0);
+            //Graphics.Blit(BG.sprite.texture, _renderTexture, Vector2.one, offset);
+            ////Graphics.Blit(BG.sprite.texture, _renderTexture, Vector2.one, offset, 0, 0);
+
+            //Graphics.CopyTexture(BackgroundRenderTexture, BG.sprite.texture);
+
+            //GL.PopMatrix();
         }
     }
 
-    private void PostRender(Camera cam)
-    {
+    private void PostRender(Camera cam) {
         DrawRoad();
     }
 
-    private void FixedUpdate()
-    {
+    private void FixedUpdate() {
         CalculateProjection();
     }
-    void Update()
-    {
+    private void Update() {
         DrawBackground();
+        // DrawRoad();
         DrawObjects();
     }
+    private void OnPostRender() {
+        // DrawRoad();
+    }
 
-    void CalculateProjection()
-    {
+    void CalculateProjection() {
         speed = 0;
         if (Input.GetKey(KeyCode.RightArrow)) playerX += 0.1f;
         if (Input.GetKey(KeyCode.LeftArrow)) playerX -= 0.1f;
@@ -265,8 +265,7 @@ public partial class HqRenderer : MonoBehaviour
         foreach (var q in quad) { q.Clear(); }
         foreach (var m in combined) { m.Clear(); }
         ///////draw road////////
-        for (int n = startPos + 1; n < startPos + DravingDistance; n++)
-        {
+        for (int n = startPos + 1; n < startPos + DravingDistance; n++) {
             ref Line l = ref track.lines[n % track.Length];
             l.project(
                 (int)(playerX * track.roadWidth - x),
@@ -279,8 +278,7 @@ public partial class HqRenderer : MonoBehaviour
             dx += l.curve;
 
             l.clip = maxy;
-            if (l.Y <= maxy)
-            {
+            if (l.Y <= maxy) {
                 continue;
             }
             maxy = l.Y;
@@ -291,8 +289,7 @@ public partial class HqRenderer : MonoBehaviour
 
             ref Line p = ref track.lines[(n - 1) % track.Length]; //previous line
 
-            if (Mathf.Abs(l.Y - p.Y) < res)
-            {
+            if (Mathf.Abs(l.Y - p.Y) < res) {
                 continue;
             }
 
@@ -300,8 +297,7 @@ public partial class HqRenderer : MonoBehaviour
             addQuad(rumble, p.X, p.Y, p.W + p.scale * rumbleWidth * screenWidth2, l.X, l.Y, l.W + l.scale * rumbleWidth * screenWidth2);
             addQuad(road, p.X, p.Y, p.W, l.X, l.Y, l.W);
 
-            if ((n / 3) % 2 == 0)
-            {
+            if ((n / 3) % 2 == 0) {
                 addQuad(dashline, p.X, p.Y * 1.1f, p.W * 0.05f, l.X, l.Y * 1.1f, l.W * 0.05f);
             }
 
